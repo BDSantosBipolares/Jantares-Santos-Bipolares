@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>Jantares Santos Bipolares</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#fff7e6; margin:0; padding:0; }
+  header { background:#ffcc00; color:#fff; padding:20px; text-align:center; }
+  h1 { margin:0; text-shadow:1px 1px 2px #aa0000; }
+  .container { padding:20px; max-width:600px; margin:auto; }
+  .event { border:2px solid #ffcc00; border-radius:10px; padding:15px; margin-bottom:15px; background:#fff0b3; }
+  .event h2 { margin-top:0; color:#aa0000; }
+  .btn { padding:8px 12px; margin:5px; border:none; border-radius:5px; cursor:pointer; }
+  .btn-vou { background:green; color:#fff; }
+  .btn-talvez { background:orange; color:#fff; }
+  .btn-nao { background:red; color:#fff; }
+  .comment-box { width:100%; padding:5px; margin-top:5px; }
+  .secret-input { margin-bottom:10px; width:100%; padding:5px; }
+  .link { color:blue; text-decoration:underline; cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Jantares Santos Bipolares</h1>
+  <p>🎉 Arraial de jantares do grupo 🎉</p>
+</header>
+<div class="container">
+  <h2>Criar evento (só administrador)</h2>
+  <input type="password" id="secret" placeholder="Código secreto" class="secret-input">
+  <input type="text" id="eventName" placeholder="Nome do evento" class="secret-input">
+  <input type="text" id="eventDate" placeholder="Data e hora" class="secret-input">
+  <input type="text" id="eventPlace" placeholder="Restaurante/Local" class="secret-input">
+  <input type="text" id="eventLink" placeholder="Link restaurante" class="secret-input">
+  <input type="text" id="eventMap" placeholder="Link Google Maps" class="secret-input">
+  <input type="text" id="eventNotes" placeholder="Notas / Observações" class="secret-input">
+  <button onclick="createEvent()">Criar Evento</button>
+  <hr>
+  <h2>Eventos</h2>
+  <div id="events"></div>
+</div>
+
+<script>
+const adminCode = "1234"; // muda para teu código secreto
+let events = JSON.parse(localStorage.getItem('events')) || [];
+
+function saveEvents(){ localStorage.setItem('events', JSON.stringify(events)); }
+
+function createEvent(){
+  const code = document.getElementById('secret').value;
+  if(code !== adminCode){ alert('Código secreto incorreto!'); return; }
+  const name = document.getElementById('eventName').value;
+  const date = document.getElementById('eventDate').value;
+  const place = document.getElementById('eventPlace').value;
+  const link = document.getElementById('eventLink').value;
+  const map = document.getElementById('eventMap').value;
+  const notes = document.getElementById('eventNotes').value;
+  if(!name || !date || !place){ alert('Preenche nome, data e local'); return; }
+
+  const event = { name, date, place, link, map, notes, vou:0, talvez:0, nao:0, comments:[] };
+  events.push(event);
+  saveEvents();
+  renderEvents();
+  clearInputs();
+}
+
+function clearInputs(){
+  document.getElementById('eventName').value='';
+  document.getElementById('eventDate').value='';
+  document.getElementById('eventPlace').value='';
+  document.getElementById('eventLink').value='';
+  document.getElementById('eventMap').value='';
+  document.getElementById('eventNotes').value='';
+  document.getElementById('secret').value='';
+}
+
+function renderEvents(){
+  const container = document.getElementById('events');
+  container.innerHTML='';
+  events.forEach((ev,i)=>{
+    const div = document.createElement('div');
+    div.className='event';
+    div.innerHTML=`
+      <h2>${ev.name}</h2>
+      <p><strong>Data/Hora:</strong> ${ev.date}</p>
+      <p><strong>Local:</strong> ${ev.place}</p>
+      ${ev.link ? `<p><a href="${ev.link}" target="_blank" class="link">Site do restaurante</a></p>` : ''}
+      ${ev.map ? `<p><a href="${ev.map}" target="_blank" class="link">Google Maps</a></p>` : ''}
+      ${ev.notes ? `<p><strong>Notas:</strong> ${ev.notes}</p>` : ''}
+      <p>Presenças: ✅ ${ev.vou} | ⚠️ ${ev.talvez} | ❌ ${ev.nao}</p>
+      <button class="btn btn-vou" onclick="mark(${i},'vou')">Vou</button>
+      <button class="btn btn-talvez" onclick="mark(${i},'talvez')">Talvez</button>
+      <button class="btn btn-nao" onclick="mark(${i},'nao')">Não Vou</button>
+      <div>
+        <input type="text" placeholder="Comentário..." class="comment-box" id="comment${i}">
+        <button onclick="addComment(${i})">Enviar</button>
+      </div>
+      <div id="comments${i}">${ev.comments.map(c=>'<p>💬 '+c+'</p>').join('')}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function mark(index,type){
+  if(type==='vou') events[index].vou++;
+  if(type==='talvez') events[index].talvez++;
+  if(type==='nao') events[index].nao++;
+  saveEvents();
+  renderEvents();
+}
+
+function addComment(index){
+  const val = document.getElementById('comment'+index).value;
+  if(val){ events[index].comments.push(val); document.getElementById('comment'+index).value=''; saveEvents(); renderEvents(); }
+}
+
+renderEvents();
+  </script>
